@@ -29,7 +29,7 @@ vec3  vecMinusvec(const vec3 u, const vec3 v) { return (vec3){u.x-v.x, u.y-v.y, 
 
 vec3  MinusVec(const vec3 u) { return (vec3){-u.x, -u.y, -u.z};}
 
-float norm(const vec3 u){ return sqrt(u.x*u.x+u.y*u.y+u.z*u.z); }
+float norm(const vec3 u){ return sqrt(vec_vec(u, u)); }
 
 vec3 normalize(const vec3 u){ return k_vec(1./norm(u), u); }
 
@@ -176,6 +176,17 @@ vec3 cast_ray(const vec3 orig, const vec3 dir, const sphere* spheres, const int 
 
     for (size_t i=0; i<number_of_lights; i++) {
         vec3 light_dir = normalize(vecMinusvec(l[i].position, point));
+        float light_distance = norm(vecMinusvec(l[i].position, point));
+
+        // checking if the point lies in the shadow of the l[i]
+        vec3 shadow_orig = vec_vec(light_dir, N) < 0 ? vecMinusvec( point , k_vec(1e-3, N) ) : vecPlusvec( point, k_vec(1e-3, N)); 
+        vec3 shadow_pt, shadow_N;
+        material tmpmaterial;
+        /*
+        if (scene_intersect(shadow_orig, light_dir, spheres, number_of_spheres, &shadow_pt, &shadow_N, &tmpmaterial) &&
+                             norm( vecMinusvec(shadow_pt, shadow_orig) ) < light_distance)
+            continue;
+        */
         diffuse_light_intensity  += l[i].intensity * fmax(0.f, vec_vec(light_dir, N));
         specular_light_intensity += powf(fmax(0.f, vec_vec(reflect(light_dir, N), dir)), mat.specularity) * l[i].intensity;
     }
