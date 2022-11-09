@@ -5,7 +5,7 @@
 #include <float.h>
 #include <stdbool.h>
 
-int   width  = 720;
+int   width  = 920;
 int   height = 720;
 float fov    = 1.05;
 #define bg_colour (vec3){0.2, 0.7, 0.8}
@@ -59,13 +59,28 @@ light* light_construct(const vec3 p, const float i)
 // Materials
 struct material{
     vec3 diffuse_colour;
+    float albedo[2];
+    float specularity;
 };
 typedef struct material material;
 
-material* material_construct(vec3 colour)
+material* material_construct_a(vec3 colour, float albedo[2], float specularity)
 {
     material* obj= malloc(sizeof(material));
     obj->diffuse_colour = colour;
+    obj->albedo[0] = albedo[0];
+    obj->albedo[1] = albedo[1];
+    obj->specularity = specularity;
+    return obj;
+}
+
+material* material_construct(vec3 colour, float specularity)
+{
+    material* obj= malloc(sizeof(material));
+    obj->diffuse_colour = colour;
+    obj->albedo[0] = 1.0;
+    obj->albedo[1] = 0.0;
+    obj->specularity = specularity;
     return obj;
 }
 
@@ -119,6 +134,10 @@ bool ray_intersect(const sphere s, const vec3 orig, const vec3 dir, float* t0)
     return true;
 }
 
+vec3 reflect(const vec3 I, const vec3 N) {
+    return vecMinusvec(I, k_vec( vec_vec(I, N), k_vec(2.f, N)));
+}
+
 bool scene_intersect(const vec3 orig, const vec3 dir, const sphere* spheres, const int number_of_spheres, vec3* hit, vec3* N, material* mat) {
     float spheres_dist = FLT_MAX;
     for (size_t i=0; i < number_of_spheres; i++) {
@@ -153,13 +172,16 @@ vec3 cast_ray(const vec3 orig, const vec3 dir, const sphere* spheres, const int 
 
     // Add lighting
     float diffuse_light_intensity = 0.;
+    float specular_light_intensity = 0.;
 
     for (size_t i=0; i<number_of_lights; i++) {
         vec3 light_dir = normalize(vecMinusvec(l[i].position, point));
         diffuse_light_intensity  += l[i].intensity * fmax(0.f, vec_vec(light_dir, N));
+        specular_light_intensity += powf(fmax(0.f, vec_vec(reflect(light_dir, N), dir)), mat.specularity) * l[i].intensity;
     }
 
-    return k_vec(diffuse_light_intensity, mat.diffuse_colour);
+    return vecPlusvec( k_vec(mat.albedo[0] * diffuse_light_intensity, mat.diffuse_colour), 
+           k_vec(specular_light_intensity * mat.albedo[1], (vec3){1., 1., 1.} ));
 }
 
 
@@ -221,8 +243,10 @@ void render_frameBuffer_test()
 void ray_cast_test()
 {
     // Define materials
-    material* ivory = material_construct( mat1 );
-    material* redRubber = material_construct( mat2 );
+    float ivory_a[2] = {0.6,  0.3};
+    float redRubber_a[2] = {0.9,  0.1};
+    material* ivory = material_construct_a( mat1, ivory_a, 50. );
+    material* redRubber = material_construct_a( mat2, redRubber_a, 10. );
 
     // construct toy frame buffer
     vec3 frameBuffer[width*height];
