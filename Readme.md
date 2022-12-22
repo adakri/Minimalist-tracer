@@ -11,3 +11,29 @@ This project has started as me trying to find a little insignificant yet cool pr
 ## Scene
 
 ![alt text](out.png "Ray tarced scene")
+
+## Specifications for Python
+
+You'll need [PIL](https://pillow.readthedocs.io/) and [Numpy](https://numpy.org/):
+
+```shell
+pip install Pillow numpy
+```
+
+## Specifications for Haskell
+You'll need [Juicy Pixels](https://hackage.haskell.org/package/JuicyPixels) to run the haskell code.
+Here are the steps you can follow to install JuicyPixels:
+
+```shell
+cabal --version
+```
+If cabal is not installed, you can install it by following the instructions on [the Haskell Platform website](https://www.haskell.org/platform/).
+
+Update the package list by running the following command:
+```shell
+cabal update
+cabal install JuicyPixels
+```
+## Specification in C
+
+In a truly minimalist approach, you only need [the gcc compiler](https://gcc.gnu.org/) or equivalent.
